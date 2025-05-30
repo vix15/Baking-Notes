@@ -6,6 +6,8 @@ import 'package:baking_notes/screens/home_screen.dart';
 import 'package:baking_notes/screens/register_screen.dart';
 import 'package:baking_notes/widgets/theme_switch_widget.dart';
 import 'package:lottie/lottie.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'dart:io' show Platform;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,6 +25,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool _obscurePassword = true;
   String? _errorMessage;
   
+  // Variables para debugging de anuncios
+  BannerAd? _bannerAd;
+  bool _isAdLoaded = false;
+  String _adStatus = 'Inicializando AdMob...';
+  String _adUnitId = '';
+  bool _isAdMobInitialized = false;
+  
   late AnimationController _animationController;
   
   @override
@@ -33,6 +42,141 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       duration: const Duration(seconds: 2),
     );
     _animationController.repeat(reverse: true);
+    
+    // Inicializar debugging de AdMob
+    _initializeAdMobWithDebug();
+  }
+  
+  Future<void> _initializeAdMobWithDebug() async {
+    try {
+      print('🚀 Iniciando AdMob...');
+      setState(() {
+        _adStatus = 'Inicializando AdMob...';
+      });
+      
+      // Verificar inicialización de AdMob
+      final initializationStatus = await MobileAds.instance.initialize();
+      
+      print('✅ AdMob inicializado exitosamente');
+      print('📊 Estado de adaptadores: ${initializationStatus.adapterStatuses}');
+      
+      setState(() {
+        _isAdMobInitialized = true;
+        _adStatus = 'AdMob inicializado. Cargando anuncio...';
+      });
+      
+      // Configurar ID de anuncio
+      _adUnitId = _getAdUnitId();
+      print('🎯 Usando Ad Unit ID: $_adUnitId');
+      
+      // Cargar anuncio de prueba primero
+      await _loadTestAd();
+      
+    } catch (e) {
+      print('❌ Error inicializando AdMob: $e');
+      setState(() {
+        _adStatus = 'Error de inicialización: $e';
+      });
+    }
+  }
+  
+  Future<void> _loadTestAd() async {
+    try {
+      print('📱 Cargando anuncio de prueba...');
+      
+      _bannerAd = BannerAd(
+        adUnitId: _adUnitId,
+        size: AdSize.banner,
+        request: const AdRequest(
+          keywords: ['cooking', 'baking', 'recipes', 'food'],
+          nonPersonalizedAds: false,
+        ),
+        listener: BannerAdListener(
+          onAdLoaded: (ad) {
+            print('🎉 ¡ANUNCIO CARGADO EXITOSAMENTE!');
+            
+            setState(() {
+              _isAdLoaded = true;
+              _adStatus = '✅ Anuncio cargado correctamente';
+            });
+          },
+          onAdFailedToLoad: (ad, error) {
+            print('💥 ERROR AL CARGAR ANUNCIO:');
+            print('   - Mensaje: ${error.message}');
+            print('   - Código: ${error.code}');
+            print('   - Dominio: ${error.domain}');
+           
+            
+            ad.dispose();
+            
+            setState(() {
+              _adStatus = 'Error ${error.code}: ${error.message}';
+            });
+            
+            // Intentar con anuncio de prueba después de 3 segundos
+            Future.delayed(const Duration(seconds: 3), () {
+              if (mounted) {
+                _retryWithTestAd();
+              }
+            });
+          },
+          onAdOpened: (ad) {
+            print('📱 Anuncio abierto');
+          },
+          onAdClosed: (ad) {
+            print('❌ Anuncio cerrado');
+          },
+          onAdClicked: (ad) {
+            print('👆 Anuncio clickeado');
+          },
+          onAdImpression: (ad) {
+            print('👁️ Impresión de anuncio registrada');
+          },
+        ),
+      );
+      
+      await _bannerAd?.load();
+      
+    } catch (e) {
+      print('💥 Excepción al cargar anuncio: $e');
+      setState(() {
+        _adStatus = 'Excepción: $e';
+      });
+    }
+  }
+  
+  void _retryWithTestAd() {
+    print('🔄 Reintentando con anuncio de prueba...');
+    setState(() {
+      _adStatus = 'Reintentando con anuncio de prueba...';
+    });
+    
+    _bannerAd?.dispose();
+    _bannerAd = null;
+    _isAdLoaded = false;
+    
+    // Usar ID de prueba garantizado
+    _adUnitId = Platform.isAndroid 
+        ? 'ca-app-pub-3940256099942544/6300978111'  // Test ID Android
+        : 'ca-app-pub-3940256099942544/2934735716'; // Test ID iOS
+    
+    print('🧪 Usando ID de prueba: $_adUnitId');
+    _loadTestAd();
+  }
+  
+  String _getAdUnitId() {
+    // IMPORTANTE: Primero usar IDs de prueba para verificar que funciona
+    if (Platform.isAndroid) {
+      // ID de prueba para Android (SIEMPRE funciona)
+      return 'ca-app-pub-7591325260034239/7744006452';
+      
+      // Una vez que funcione, descomenta tu ID real:
+      // return '';
+    } else if (Platform.isIOS) {
+      // ID de prueba para iOS
+      return 'ca-app-pub-7591325260034239/7744006452';
+    }
+    return '';
   }
   
   @override
@@ -40,7 +184,125 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     _emailController.dispose();
     _passwordController.dispose();
     _animationController.dispose();
+    _bannerAd?.dispose();
     super.dispose();
+  }
+  
+  Widget _buildDebugAdWidget() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Información de debug
+          Text(
+            'DEBUG INFO:',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Estado: $_adStatus',
+            style: const TextStyle(color: Colors.white70, fontSize: 11),
+          ),
+          Text(
+            'AdMob Init: ${_isAdMobInitialized ? "✅" : "❌"}',
+            style: const TextStyle(color: Colors.white70, fontSize: 11),
+          ),
+          Text(
+            'Ad Unit ID: $_adUnitId',
+            style: const TextStyle(color: Colors.white70, fontSize: 10),
+          ),
+          Text(
+            'Plataforma: ${Platform.isAndroid ? "Android" : "iOS"}',
+            style: const TextStyle(color: Colors.white70, fontSize: 11),
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Anuncio o placeholder
+          Container(
+            height: 50,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: _isAdLoaded ? Colors.transparent : Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: _bannerAd != null && _isAdLoaded
+                ? AdWidget(ad: _bannerAd!)
+                : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (!_isAdLoaded) 
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _isAdLoaded ? 'Anuncio cargado' : 'Cargando...',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _isAdLoaded ? Colors.white : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+          
+          // Botones de debug
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    _bannerAd?.dispose();
+                    _bannerAd = null;
+                    _isAdLoaded = false;
+                    _loadTestAd();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                  ),
+                  child: const Text(
+                    'Recargar',
+                    style: TextStyle(fontSize: 10, color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _retryWithTestAd,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                  ),
+                  child: const Text(
+                    'Test ID',
+                    style: TextStyle(fontSize: 10, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
   
   Future<void> _login() async {
@@ -75,7 +337,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           return;
         }
         
-        // Guardar estado de autenticación
         final authBox = Hive.box<AuthState>('auth');
         final authState = AuthState(
           userId: user.id,
@@ -84,7 +345,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         
         await authBox.put('currentUser', authState);
         
-        // Navegar a la pantalla principal
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
@@ -108,7 +368,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo con gradiente
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -122,7 +381,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             ),
           ),
           
-          // Contenido principal
           SafeArea(
             child: SingleChildScrollView(
               child: Padding(
@@ -130,7 +388,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Selector de tema
                     Align(
                       alignment: Alignment.topRight,
                       child: ThemeSwitchWidget(),
@@ -138,7 +395,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     
                     const SizedBox(height: 20),
                     
-                    // Animación
+                    // Widget de debug de anuncios
+                    _buildDebugAdWidget(),
+                    
                     Center(
                       child: SizedBox(
                         height: 200,
@@ -151,7 +410,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     
                     const SizedBox(height: 20),
                     
-                    // Título
                     Text(
                       'Notas de Repostería',
                       style: TextStyle(
@@ -171,7 +429,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     
                     const SizedBox(height: 10),
                     
-                    // Subtítulo
                     const Text(
                       'Tu asistente de cocina personal',
                       style: TextStyle(
@@ -183,7 +440,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     
                     const SizedBox(height: 40),
                     
-                    // Tarjeta de inicio de sesión
                     Card(
                       elevation: 8,
                       shape: RoundedRectangleBorder(
@@ -207,7 +463,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               
                               const SizedBox(height: 20),
                               
-                              // Mensaje de error
                               if (_errorMessage != null)
                                 Container(
                                   padding: const EdgeInsets.all(10),
@@ -217,9 +472,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   ),
                                   child: Text(
                                     _errorMessage!,
-                                    style: const TextStyle(
-                                      color: Colors.red,
-                                    ),
+                                    style: const TextStyle(color: Colors.red),
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
@@ -227,7 +480,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               if (_errorMessage != null)
                                 const SizedBox(height: 20),
                               
-                              // Campo de correo electrónico
                               TextFormField(
                                 controller: _emailController,
                                 decoration: const InputDecoration(
@@ -248,7 +500,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               
                               const SizedBox(height: 16),
                               
-                              // Campo de contraseña
                               TextFormField(
                                 controller: _passwordController,
                                 decoration: InputDecoration(
@@ -276,7 +527,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               
                               const SizedBox(height: 24),
                               
-                              // Botón de inicio de sesión
                               SizedBox(
                                 height: 50,
                                 child: ElevatedButton(
@@ -292,7 +542,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               
                               const SizedBox(height: 16),
                               
-                              // Enlace para registrarse
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

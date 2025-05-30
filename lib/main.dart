@@ -11,11 +11,12 @@ import 'package:baking_notes/screens/login_screen.dart';
 import 'package:baking_notes/screens/home_screen.dart';
 import 'package:baking_notes/screens/splash_screen.dart';
 import 'package:baking_notes/theme/theme_provider.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:uuid/uuid.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  MobileAds.instance.initialize();
   await Hive.initFlutter();
 
   // Registrar adaptadores
@@ -99,32 +100,46 @@ Future<void> _addSampleRecipes() async {
       id: 'recipe_${const Uuid().v4()}',
       userId: defaultUserId,
       name: 'Tarta de Limón con Merengue',
-      description:
-          'Unas tarta de limón fresca y cremosa, coronada con un merengue suave y dorado. ¡El toque perfecto para un día de chicas!',
+      description: 'Una tarta de limón fresca y cremosa, coronada con un merengue suave y dorado.',
       ingredients: [
-        '1 masa quebrada para tarta',
-        '1 taza de azúcar',
-        '1/4 taza de maicena',
-        '1 1/2 tazas de agua',
-        '4 yemas de huevo',
-        '2/3 taza de jugo de limón fresco',
-        '2 cucharaditas de ralladura de limón',
-        '1 cucharada de mantequilla',
-        '3 claras de huevo',
-        '1/4 cucharadita de cremor tártaro',
-        '1/2 taza de azúcar para el merengue',
+        'Para la masa:',
+        '250g harina',
+        '125g mantequilla fría',
+        '50g azúcar glas',
+        '1 huevo',
+        '1 pizca sal',
+        'Para el relleno:',
+        '4 limones (jugo y ralladura)',
+        '4 yemas huevo',
+        '1 lata leche condensada (400g)',
+        'Para el merengue:',
+        '4 claras huevo',
+        '200g azúcar',
+        '1 pizca sal'
       ],
       steps: [
-        'Precalienta el horno a 180°C y hornea la masa durante 10-12 minutos.',
-        'En una cacerola, mezcla el azúcar, la maicena y el agua. Cocina a fuego medio, batiendo constantemente hasta que espese.',
-        'Agrega las yemas de huevo, el jugo y la ralladura de limón. Cocina a fuego bajo durante 2 minutos más.',
-        'Incorpora la mantequilla y vierte la mezcla sobre la base de la tarta ya horneada.',
-        'Bate las claras con el cremor tártaro hasta que se formen picos suaves. Agrega el azúcar y sigue batiendo hasta que el merengue esté firme.',
-        'Cubre la tarta con el merengue y hornea por 10 minutos hasta que se dore.',
-        'Deja enfriar y sirve con amor.',
+        'MASA:',
+        '1. Mezclar harina, azúcar y sal en un bol.',
+        '2. Añadir mantequilla en cubos y mezclar con dedos hasta arena.',
+        '3. Agregar huevo y formar una bola sin amasar mucho.',
+        '4. Envolver en plástico y refrigerar 30 min.',
+        '5. Estirar a 3mm y forrar molde de 23cm.',
+        '6. Pinchar fondo con tenedor y hornear 15 min a 180°C con peso.',
+        '7. Hornear 5 min más sin peso.',
+        
+        'RELLENO:',
+        '1. Mezclar yemas con leche condensada.',
+        '2. Añadir jugo (150ml) y ralladura de limón.',
+        '3. Verter sobre masa y hornear 15 min a 160°C.',
+        
+        'MERENGUE:',
+        '1. Batir claras con sal hasta espuma.',
+        '2. Añadir azúcar poco a poco hasta picos firmes.',
+        '3. Cubrir tarta y dorar con soplete.',
+        '4. Refrigerar 2 horas antes de servir.'
       ],
-      prepTime: 20,
-      cookTime: 25,
+      prepTime: 45,
+      cookTime: 35,
       servings: 8,
       category: 'Tartas',
       imageUrl: 'assets/images/tarta_limón_merengue.jpg',
@@ -132,41 +147,41 @@ Future<void> _addSampleRecipes() async {
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
     ),
 
-    Recipe(
+     Recipe(
       id: 'recipe_${const Uuid().v4()}',
       userId: defaultUserId,
       name: 'Galletas de Avena y Pasas',
-      description:
-          'Galletas suaves de avena con pasas, perfectas para acompañar tu té o como snack dulce y saludable.',
+      description: 'Galletas saludables con avena y pasas, perfectas para el desayuno.',
       ingredients: [
-        '1 taza de mantequilla derretida',
-        '1 taza de azúcar moreno',
-        '1/2 taza de azúcar blanca',
-        '2 huevos',
-        '1 cucharadita de extracto de vainilla',
-        '1 taza de harina para todo uso',
-        '1 1/2 tazas de avena',
-        '1 taza de pasas',
-        '1 cucharadita de canela en polvo',
-        '1/2 cucharadita de polvo de hornear',
+        '120g mantequilla',
+        '100g azúcar moreno',
+        '50g azúcar blanco',
+        '1 huevo',
+        '1 cdta vainilla',
+        '150g harina',
+        '120g avena',
+        '1/2 cdta canela',
+        '1/2 cdta bicarbonato',
+        '100g pasas',
+        '1 pizca sal'
       ],
       steps: [
-        'Precalienta el horno a 180°C y coloca papel para hornear en la bandeja.',
-        'Bate la mantequilla derretida con los azúcares hasta que quede suave.',
-        'Añade los huevos y el extracto de vainilla, mezcla bien.',
-        'Agrega la harina, avena, canela, polvo de hornear y mezcla hasta formar una masa espesa.',
-        'Incorpora las pasas y forma bolitas de masa. Colócalas en la bandeja.',
-        'Hornea durante 10-12 minutos, o hasta que estén doradas.',
-        'Deja enfriar antes de servir.',
+        '1. Batir mantequilla con azúcares hasta cremoso.',
+        '2. Añadir huevo y vainilla, mezclar bien.',
+        '3. Incorporar harina, avena, canela, bicarbonato y sal.',
+        '4. Agregar pasas y mezclar uniformemente.',
+        '5. Formar bolitas de 3cm y aplanar ligeramente.',
+        '6. Hornear 12 min a 180°C hasta bordes dorados.',
+        '7. Dejar enfriar 5 min en bandeja antes de mover.'
       ],
       prepTime: 15,
       cookTime: 12,
-      servings: 24,
+      servings: 18,
       category: 'Galletas',
       imageUrl: 'assets/images/galletas_avena_pasas.jpg',
       isFavorite: false,
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
-    ),
+      ),
 
     Recipe(
       id: 'recipe_${const Uuid().v4()}',
